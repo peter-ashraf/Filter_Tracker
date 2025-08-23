@@ -1,17 +1,16 @@
 
-const CACHE_VERSION = "v2";
-const CACHE_NAME = "filter-tracker-" + CACHE_VERSION;
 
-// derive base path (works on GitHub Pages subpaths)
+// PATCH: Fixed cache scope & asset paths
+const CACHE_VERSION = 'v2';
 const BASE = self.registration.scope;
+
 const ASSETS = [
   BASE,
-  BASE + "index.html",
-  BASE + "manifest.json",
-  BASE + "service-worker.js",
-  BASE + "icons/icon-192.png",
-  BASE + "icons/icon-512.png"
+  BASE + 'index.html',
+  BASE + 'manifest.json',
+  BASE + 'favicon.ico'
 ];
+
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
