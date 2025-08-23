@@ -423,7 +423,55 @@
             transform: translateX(16px);
         }
 
-    </style>
+    
+/* PATCH: Notification Banner Contrast Fix */
+.notification-banner {
+    animation: slideInDown 0.5s ease-out;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+.notification-banner p { color: rgba(255, 255, 255, 0.9); }
+.notification-banner #notification-status { color: #fff; font-weight: 700; }
+.notification-banner .btn {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+}
+.notification-banner .btn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: scale(1.05);
+}
+
+/* PATCH: Mobile Card Actions Optimization */
+@media (max-width: 768px) {
+  .card-actions {
+    display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem;
+  }
+  .card-actions .btn:first-child { order: -1; width: 100%; }
+  .card-actions-secondary { display: flex; gap: 0.5rem; }
+  .card-actions-secondary .btn { flex: 1; font-size: 0.75rem; padding: 0.5rem; min-height: 36px; }
+  .card-actions .btn-test { display: none; }
+}
+.view-toggle {
+  position: fixed; bottom: 20px; right: 20px; z-index: 40;
+  background: rgba(99,102,241,0.9); color: white;
+  border: none; border-radius: 50%; width: 56px; height: 56px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); backdrop-filter: blur(10px);
+}
+
+/* PATCH: Swipe Gestures Support */
+[data-swipe-hint="true"] { position: relative; }
+[data-swipe-hint="true"]::after {
+  content: "← Edit • Done →";
+  position: absolute; bottom: -20px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem; color: rgba(255,255,255,0.5);
+  pointer-events: none; opacity: 0;
+  transition: opacity 0.3s ease;
+}
+[data-swipe-hint="true"]:hover::after { opacity: 1; }
+
+</style>
 </head>
 <body class="min-h-screen p-4">
 
@@ -1234,5 +1282,52 @@
         window.replaceFilter = replaceFilter;
         window.closeModal = closeModal;
     </script>
+<script>
+
+// PATCH: Accurate Time Math
+function calculateProgress(startDate, durationMonths) {
+  const start = new Date(startDate);
+  const end = new Date(start);
+  end.setMonth(end.getMonth() + durationMonths);
+  const now = new Date();
+  if (now <= start) return 0;
+  if (now >= end) return 100;
+  const total = end - start, elapsed = now - start;
+  return Math.round((elapsed / total) * 100);
+}
+
+// PATCH: Disable Notifications UX Clarification
+function updateNotificationBanner(enabled) {
+  const statusEl = document.getElementById('notification-status');
+  if (statusEl) {
+    statusEl.textContent = enabled ? "Enabled (app reminders only)" : "Disabled";
+  }
+}
+
+// PATCH: Swipe Gestures Support
+class SwipeHandler {
+  constructor(element, callbacks) {
+    this.el = element; this.cb = callbacks;
+    this.startX = 0; this.startY = 0; this.threshold = 50;
+    this.el.addEventListener('touchstart', this.start.bind(this), { passive: true });
+    this.el.addEventListener('touchend', this.end.bind(this), { passive: true });
+  }
+  start(e) { this.startX = e.touches[0].clientX; this.startY = e.touches[0].clientY; }
+  end(e) {
+    const dx = e.changedTouches[0].clientX - this.startX;
+    const dy = e.changedTouches[0].clientY - this.startY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > this.threshold) {
+      dx > 0 ? this.cb.swipeRight?.() : this.cb.swipeLeft?.();
+    }
+  }
+}
+function addSwipeToCard(card, id) {
+  new SwipeHandler(card, {
+    swipeRight: () => { replaceFilter(id); vibrateIfPossible(100); },
+    swipeLeft: () => { editFilter(id); vibrateIfPossible(50); }
+  });
+  card.setAttribute('data-swipe-hint', 'true');
+}
+</script>
 </body>
 </html>
